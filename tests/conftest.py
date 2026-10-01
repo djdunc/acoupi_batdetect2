@@ -120,7 +120,24 @@ def celery_includes():
 
 @pytest.fixture(scope="session")
 def celery_config():
-    return CeleryConfig().model_dump()
+    conf = CeleryConfig().model_dump()
+    conf["imports"] = list(conf.get("imports", [])) + ["celery.contrib.testing.tasks"]
+    return conf
+
+
+@pytest.fixture(autouse=True)
+def register_celery_tasks(celery_app):
+    try:
+        from celery.contrib.testing.tasks import ping
+        if "celery.ping" not in celery_app.tasks:
+            celery_app.register_task(ping)
+    except Exception:
+        pass
+    if "celery.ping" not in celery_app.tasks:
+        @celery_app.task(name="celery.ping")
+        def ping():
+            return "pong"
+
 
 
 
