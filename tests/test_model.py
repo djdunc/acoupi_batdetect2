@@ -2,10 +2,11 @@
 
 from acoupi import data
 
-from acoupi_batdetect2.model import BatDetect2
+from acoupi_batdetect2.model import BatDetect2, BatDetect2Model
 
 
 def test_batdetect2(recording: data.Recording):
+    assert BatDetect2Model is BatDetect2
     model = BatDetect2()
     detections = model.run(recording)
 
