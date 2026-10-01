@@ -30,43 +30,57 @@
 
 ---
 
-## 2. Planned Implementation Roadmap
+## 2. Implementation Progress & Current State
 
-### A. PipeWire Ultrasonic Support
-* **Target:** Setup utilities / audio recording configuration.
-* **Source Reference:** [`src/acoupi_yeo_valley/scripts.py:setup_pipewire`](file:///Users/dunc/Dropbox/code/CASA/yeo/src/acoupi_yeo_valley/scripts.py#L93-L133)
-* **What to add:**
-  * Auto-generate `~/.config/pipewire/pipewire.conf.d/10-rates.conf`:
-    ```conf
-    context.properties = {
-        default.clock.rate = 250000
-        default.clock.allowed-rates = [ 32000 48000 96000 192000 250000 384000 ]
-    }
-    ```
-  * Ensure all import-time and setup logs output to `sys.stderr` to prevent corrupting Celery JSON parsing in `acoupi deployment status`.
+### Completed & Merged into `main` (commit `7029186`)
+1. **NumPy & Type Serialization Fix:**
+   - Explicitly cast all detection scores, bounding boxes, and tag scores to native `float` / `str` in [`src/acoupi_batdetect2/model.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/model.py).
+2. **Batched Inference & `inference_mode()` (Branch `perf/batched-inference-mode`):**
+   - Implemented `get_clips_from_files()`, `adjust_width()`, batched `self.api.model.detector(batch)`, and `torch.inference_mode()` in `model.py`.
+   - Added persistent deployment defaults (`~/.acoupi/config/deployment_defaults.json`) in [`src/acoupi_batdetect2/cli.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/cli.py).
+   - Verified end-to-end MQTT messaging on live Raspberry Pi 5 (`send-test.py`).
+3. **Multi-Tier Sensitivity Thresholds (Branch `feat/multi-tier-thresholds`):**
+   - Added `detection_threshold` (0.3), `messaging_threshold` (0.5), and `saving_threshold` (0.7) to `BatDetect2Config` and wired them through `program.py`.
+4. **Reusable Components & Astral Nocturnal Schedule (Branch `feat/is-night-time-schedule`):**
+   - Created [`src/acoupi_batdetect2/components.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/components.py) with `IsNightTime`, `HasHighConfidenceDetection`, and `ModelSeparatedDateFileManager`.
+   - Wired `get_recording_conditions()` in `program.py`.
 
-### B. Precise Audio Trimming (`pw-record` wrapper)
-* **Target:** Audio recording execution layer.
-* **Source Reference:** [`src/acoupi_yeo_valley/scripts.py:pw_record`](file:///Users/dunc/Dropbox/code/CASA/yeo/src/acoupi_yeo_valley/scripts.py#L10-L84)
-* **What to add:**
-  * Add duration buffer (0.5s) to handle PipeWire startup latency.
-  * Post-process WAV file to truncate exactly to `sample_count` frames (`wave.readframes` / `wave.writeframes`).
+---
 
-### C. Guano RAM Disk OOM Prevention
-* **Target:** Audio saving / metadata tagging pipeline.
-* **Source Reference:** [`src/acoupi_yeo_valley/program.py`](file:///Users/dunc/Dropbox/code/CASA/yeo/src/acoupi_yeo_valley/program.py)
-* **What to add:**
-  * Disable backup creation on `guano.GuanoFile.write()` (pass `make_backup=False`) so temporary RAM disks (`/run/shm`) do not fill up with `.backup` files.
+### Active Branch: `feat/pipewire-ultrasonic` (commit `513a3ff`)
+1. **PipeWire Ultrasonic Rates Setup ([`src/acoupi_batdetect2/scripts.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/scripts.py)):**
+   - Added `setup_pipewire()` to generate `~/.config/pipewire/pipewire.conf.d/10-rates.conf` (rates: 32k, 48k, 96k, 192k, 250k, 384k).
+   - Ensured all setup logging prints to `sys.stderr`.
+   - Integrated `setup_audio()` into `BatDetect2_Program.setup()`.
+2. **Precise Audio Trimming & Recorder:**
+   - Implemented `trim_wav()` and `pw_record()` with +0.5s duration latency buffer.
+   - Added `PrecisePWRecorder` to `components.py`.
+3. **Celery Worker Safeguards:**
+   - Prepending virtualenv `bin` to `PATH` for worker subprocesses in `program.py`.
+   - Added `setup_celery()` setting `worker_max_tasks_per_child=20`.
 
-### D. Reusable Components (`acoupi.components`)
-* **Target:** `acoupi.components`
-* **Source Reference:** [`src/acoupi_yeo_valley/components.py`](file:///Users/dunc/Dropbox/code/CASA/yeo/src/acoupi_yeo_valley/components.py)
-* **What to add:**
-  * `IsNightTime(RecordingCondition)`: Astral sunrise/sunset calculator with configurable `before` and `after` offsets.
-  * `HasHighConfidenceDetection(RecordingSavingFilter)`: Filter to save audio only when model detection exceeds threshold.
-  * `ModelSeparatedDateFileManager(DateFileManager)`: Date and model/category-partitioned storage (`category/YYYY/MM/DD/`).
+---
 
-### E. Resilient Network & Transport Startup
-* **Target:** `acoupi.program` / messenger initialization.
-* **What to add:**
-  * Wrap messenger `open()` and `join()` in `try...except` so offline/boot radio failures do not halt the core recording scheduler.
+## 3. Test Suite Status & Resumption Plan
+
+### Test Results on Pi:
+- **14 PASSED / 6 Celery Integration Errors:**
+  - `test_components.py` (5 passed)
+  - `test_configs.py` (4 passed)
+  - `test_model.py` (1 passed)
+  - `test_scripts.py` (4 passed)
+  - `test_file_management.py` (5 errors at worker setup)
+  - `test_program.py` (1 error at worker setup)
+
+### Root Cause for Worker Setup Errors:
+- `celery_worker` in `celery.contrib.pytest` tries to start an in-process worker that connects to RabbitMQ (`amqp://guest@127.0.0.1:5672`) because `CeleryConfig().model_dump()` provides the production AMQP broker URL instead of test memory transport.
+- When `worker.start_worker` pings `'celery.ping'`, task routing / broker connection on localhost fails to receive the ping return value.
+
+### Plan When Back:
+1. **Fix Celery Test Broker Configuration in `tests/conftest.py`:**
+   - Override `celery_config` to use in-memory/eager execution for testing (e.g. `broker_url="memory://"`, `result_backend="cache+memory://"`, `task_always_eager=True` or isolated test app) so integration tests do not require a live RabbitMQ daemon.
+2. **Merge `feat/pipewire-ultrasonic` into `main` after all 20 tests pass.**
+3. **Verify Guano RAM Disk OOM Prevention (Item C):**
+   - Ensure `guano.GuanoFile.write(make_backup=False)` is used when tagging in temporary directories.
+4. **Deploy & Live Field Test on Pi (`acoupi setup --program acoupi_batdetect2.program`).**
+
