@@ -70,6 +70,7 @@ from acoupi import components, data, tasks
 from acoupi.components import types
 from acoupi.programs.templates import DetectionProgram
 
+from acoupi_batdetect2.components import IsNightTime
 from acoupi_batdetect2.configuration import (
     BatDetect2_ConfigSchema,
 )
@@ -80,6 +81,55 @@ class BatDetect2_Program(DetectionProgram[BatDetect2_ConfigSchema]):
     """BatDetect2 Program Configuration."""
 
     config_schema = BatDetect2_ConfigSchema
+
+    def get_recording_conditions(
+        self, config: BatDetect2_ConfigSchema
+    ) -> list[types.RecordingCondition]:
+        """Get the recording conditions for the BatDetect2 Program.
+
+        Parameters
+        ----------
+        config : BatDetect2_ConfigSchema
+            The configuration schema for the BatDetect2 program.
+
+        Returns
+        -------
+        list[types.RecordingCondition]
+            A list of recording conditions including solar nocturnal schedule.
+        """
+        conditions: list[types.RecordingCondition] = []
+        if getattr(config.recording, "use_nocturnal_schedule", True):
+            lat = getattr(config.recording, "latitude", None)
+            lon = getattr(config.recording, "longitude", None)
+
+            if lat is None or lon is None:
+                try:
+                    from acoupi_batdetect2.cli import get_defaults
+
+                    defaults = get_defaults()
+                    lat = defaults.get("latitude", lat)
+                    lon = defaults.get("longitude", lon)
+                except Exception:
+                    pass
+
+            before_min = getattr(
+                config.recording, "buffer_before_sunset_minutes", 30
+            )
+            after_min = getattr(
+                config.recording, "buffer_after_sunrise_minutes", 30
+            )
+
+            conditions.append(
+                IsNightTime(
+                    timezone=getattr(config, "timezone", "Europe/London"),
+                    latitude=lat,
+                    longitude=lon,
+                    before=datetime.timedelta(minutes=before_min),
+                    after=datetime.timedelta(minutes=after_min),
+                )
+            )
+
+        return conditions
 
     def setup(self, config):
         """Set up the BatDetect2 Program.

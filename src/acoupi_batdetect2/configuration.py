@@ -23,6 +23,36 @@ class BatDetect2_AudioConfig(AudioConfiguration):
     )
     """End time for recording schedule."""
 
+    use_nocturnal_schedule: bool = Field(
+        default=True,
+        description="Whether to use solar nocturnal schedule (IsNightTime) for recording",
+    )
+    """Whether to use solar nocturnal schedule."""
+
+    buffer_before_sunset_minutes: int = Field(
+        default=30,
+        description="Minutes before sunset to begin nocturnal recording window",
+    )
+    """Minutes before sunset to begin recording."""
+
+    buffer_after_sunrise_minutes: int = Field(
+        default=30,
+        description="Minutes after sunrise to end nocturnal recording window",
+    )
+    """Minutes after sunrise to end recording."""
+
+    latitude: Optional[float] = Field(
+        default=None,
+        description="Latitude for astral solar calculations",
+    )
+    """Latitude coordinate."""
+
+    longitude: Optional[float] = Field(
+        default=None,
+        description="Longitude for astral solar calculations",
+    )
+    """Longitude coordinate."""
+
 
 class ModelConfig(BaseModel):
     """Model and multi-tier threshold configuration."""
