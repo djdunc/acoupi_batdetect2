@@ -72,20 +72,20 @@ class BatDetect2(types.Model):
         # Convert the raw detections to a list of detections
         detections = [
             data.Detection(
-                detection_score=detection["det_prob"],
+                detection_score=float(detection["det_prob"]),
                 location=data.BoundingBox.from_coordinates(
-                    detection["start_time"],
-                    detection["low_freq"],
-                    detection["end_time"],
-                    detection["high_freq"],
+                    float(detection["start_time"]),
+                    float(detection["low_freq"]),
+                    float(detection["end_time"]),
+                    float(detection["high_freq"]),
                 ),
                 tags=[
                     data.PredictedTag(
                         tag=data.Tag(
                             key="species",
-                            value=detection["class"],
+                            value=str(detection["class"]),
                         ),
-                        confidence_score=detection["class_prob"],
+                        confidence_score=float(detection["class_prob"]),
                     ),
                 ],
             )
