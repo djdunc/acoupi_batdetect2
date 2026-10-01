@@ -5,6 +5,7 @@ from acoupi_batdetect2.configuration import (
 )
 from acoupi_batdetect2.model import BatDetect2, BatDetect2Model
 from acoupi_batdetect2.program import BatDetect2_Program
+from acoupi_batdetect2.scripts import setup_pipewire
 
 __all__ = [
     "BatDetect2",
@@ -13,4 +14,6 @@ __all__ = [
     "ModelConfig",
     "BatDetect2_ConfigSchema",
     "BatDetect2_Program",
+    "setup_pipewire",
 ]
+

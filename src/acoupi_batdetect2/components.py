@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 from acoupi import data
-from acoupi.components import DateFileManager
+from acoupi.components import DateFileManager, PWRecorder
 from acoupi.components.types import (
     RecordingCondition,
     RecordingSavingFilter,
@@ -16,11 +16,15 @@ from acoupi.components.types import (
 from astral import LocationInfo
 from astral.sun import sun
 
+from acoupi_batdetect2.scripts import trim_wav
+
 __all__ = [
     "HasHighConfidenceDetection",
     "IsNightTime",
     "ModelSeparatedDateFileManager",
+    "PrecisePWRecorder",
 ]
+
 
 
 @dataclass
@@ -159,4 +163,26 @@ class ModelSeparatedDateFileManager(DateFileManager):
             / Path(f"{date.day:02d}")
         )
         return directory / Path(filename)
+
+
+@dataclass
+class PrecisePWRecorder(PWRecorder):
+    """PipeWire audio recorder with precise sample count truncation.
+
+    Records with an additional duration buffer to avoid PipeWire startup
+    latency truncation, then trims the recorded WAV to the exact requested
+    sample count.
+    """
+
+    buffer_seconds: float = 0.5
+
+    def record(self, output_path: Union[Path, str]) -> Path:
+        """Record and trim audio output."""
+        # Record via base PWRecorder
+        recorded_path = super().record(output_path)
+        if recorded_path and Path(recorded_path).exists():
+            target_samples = int(self.duration * self.samplerate)
+            trim_wav(recorded_path, target_samples=target_samples)
+        return Path(recorded_path)
+
 

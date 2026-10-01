@@ -64,6 +64,8 @@ each band (low, mid, high).
 """
 
 import datetime
+import os
+import sys
 
 import pytz
 from acoupi import components, data, tasks
@@ -75,12 +77,38 @@ from acoupi_batdetect2.configuration import (
     BatDetect2_ConfigSchema,
 )
 from acoupi_batdetect2.model import BatDetect2
+from acoupi_batdetect2.scripts import setup_pipewire
+
+# Prepend virtualenv bin directory to PATH for subprocesses (like celery workers)
+virtualenv_bin = os.path.dirname(sys.executable)
+if virtualenv_bin and virtualenv_bin not in os.environ.get("PATH", "").split(
+    os.pathsep
+):
+    os.environ["PATH"] = (
+        virtualenv_bin + os.pathsep + os.environ.get("PATH", "")
+    )
 
 
 class BatDetect2_Program(DetectionProgram[BatDetect2_ConfigSchema]):
     """BatDetect2 Program Configuration."""
 
     config_schema = BatDetect2_ConfigSchema
+
+    def setup_audio(self, config: BatDetect2_ConfigSchema) -> None:
+        """Ensure PipeWire is configured to support ultrasonic sample rates."""
+        try:
+            setup_pipewire()
+        except (OSError, RuntimeError, UnicodeError) as e:
+            self.logger.warning(
+                f"Could not verify/setup PipeWire configuration: {e}"
+            )
+
+    def setup_celery(self, config: BatDetect2_ConfigSchema) -> None:
+        """Configure Celery to prevent worker memory and descriptor leaks."""
+        self.app.conf.update(
+            worker_max_tasks_per_child=20,
+            task_ignore_result=True,
+        )
 
     def get_recording_conditions(
         self, config: BatDetect2_ConfigSchema
@@ -138,6 +166,9 @@ class BatDetect2_Program(DetectionProgram[BatDetect2_ConfigSchema]):
         recording, detection, management, messaging, and summariser tasks,
         and performs any necessary setup for the program to run.
         """
+        self.setup_audio(config)
+        self.setup_celery(config)
+
         # Setup all the elements from the DetectionProgram
         super().setup(config)
 
@@ -155,6 +186,7 @@ class BatDetect2_Program(DetectionProgram[BatDetect2_ConfigSchema]):
                     minutes=config.summariser_config.interval
                 ),
             )
+
 
     def configure_model(self, config):
         """Configure the BatDetect2 model.
