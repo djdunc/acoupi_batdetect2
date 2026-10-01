@@ -25,10 +25,29 @@ class BatDetect2_AudioConfig(AudioConfiguration):
 
 
 class ModelConfig(BaseModel):
-    """Model output configuration."""
+    """Model and multi-tier threshold configuration."""
 
-    detection_threshold: float = 0.4
-    """Detection threshold for filtering model outputs."""
+    detection_threshold: float = Field(
+        default=0.3,
+        description="Threshold used to determine which detections are stored in the local database",
+        ge=0.0,
+        le=1.0,
+    )
+    messaging_threshold: float = Field(
+        default=0.5,
+        description="Threshold used to determine which detections are sent as messages",
+        ge=0.0,
+        le=1.0,
+    )
+    saving_threshold: float = Field(
+        default=0.7,
+        description="Threshold used to determine which recordings should be saved to disk",
+        ge=0.0,
+        le=1.0,
+    )
+
+
+BatDetect2Config = ModelConfig
 
 
 class SaveRecordingFilter(BaseModel):

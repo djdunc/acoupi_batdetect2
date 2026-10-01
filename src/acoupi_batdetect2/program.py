@@ -114,7 +114,7 @@ class BatDetect2_Program(DetectionProgram[BatDetect2_ConfigSchema]):
         BatDetect2
             The BatDetect2 model instance.
         """
-        return BatDetect2()
+        return BatDetect2(detection_threshold=config.model.detection_threshold)
 
     def get_summarisers(self, config) -> list[types.Summariser]:
         """Get the summarisers for the BatDetect2 Program.
@@ -180,6 +180,11 @@ class BatDetect2_Program(DetectionProgram[BatDetect2_ConfigSchema]):
         list[types.RecordingSavingManager]
             A list of file managers for the batdetect2 program.
         """
+        saving_threshold = (
+            config.model.saving_threshold
+            if config.model.saving_threshold is not None
+            else config.saving_managers.bat_threshold
+        )
         return [
             components.SaveRecordingManager(
                 dirpath=config.paths.recordings,
@@ -189,7 +194,7 @@ class BatDetect2_Program(DetectionProgram[BatDetect2_ConfigSchema]):
                 / config.saving_managers.false_dir,
                 timeformat=config.saving_managers.timeformat,
                 detection_threshold=config.model.detection_threshold,
-                saving_threshold=config.saving_managers.bat_threshold,
+                saving_threshold=saving_threshold,
             )
         ]
 
@@ -205,13 +210,16 @@ class BatDetect2_Program(DetectionProgram[BatDetect2_ConfigSchema]):
         Returns
         -------
         list[types.MessageBuilder]
-            A list of message factories for the batdetect2 program. By default,
-            the message factory will use the `detection_threshold` parameter for
-            buildling messages.
+            A list of message factories for the batdetect2 program.
         """
+        messaging_threshold = (
+            config.model.messaging_threshold
+            if config.model.messaging_threshold is not None
+            else config.model.detection_threshold
+        )
         return [
             components.DetectionThresholdMessageBuilder(
-                detection_threshold=config.model.detection_threshold
+                detection_threshold=messaging_threshold
             )
         ]
 
