@@ -107,8 +107,8 @@ class BatDetect2_Program(DetectionProgram[BatDetect2_ConfigSchema]):
         """Configure Celery to prevent worker memory and descriptor leaks."""
         self.app.conf.update(
             worker_max_tasks_per_child=20,
-            task_ignore_result=True,
         )
+
 
     def get_recording_conditions(
         self, config: BatDetect2_ConfigSchema

@@ -114,8 +114,14 @@ def program_config(
 
 
 @pytest.fixture(scope="session")
+def celery_includes():
+    return ("celery.contrib.testing.tasks",)
+
+
+@pytest.fixture(scope="session")
 def celery_config():
     return CeleryConfig().model_dump()
+
 
 
 @pytest.fixture
