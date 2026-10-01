@@ -77,8 +77,6 @@ def test_pw_record_calls_subprocess(tmp_path):
 def test_precise_pw_recorder(tmp_path):
     wav_path = tmp_path / "precise.wav"
     samplerate = 192000
-    total_frames = int(1.5 * samplerate)
-    dummy_data = b"\x00\x00" * total_frames
 
     recorder = PrecisePWRecorder(
         duration=1.0,
@@ -86,16 +84,17 @@ def test_precise_pw_recorder(tmp_path):
         audio_channels=1,
     )
 
-    def fake_record(output_path):
-        with wave.open(str(output_path), "wb") as w:
-            w.setnchannels(1)
-            w.setsampwidth(2)
-            w.setframerate(samplerate)
-            w.writeframes(dummy_data)
-        return output_path
-
-    with patch("acoupi.components.PWRecorder.record", side_effect=fake_record):
+    with patch(
+        "acoupi_batdetect2.components.pw_record", return_value=wav_path
+    ) as mock_pw:
         result = recorder.record(wav_path)
-        assert Path(result).exists()
-        with wave.open(str(result), "rb") as r:
-            assert r.getnframes() == 192000
+        assert result == wav_path
+        mock_pw.assert_called_once_with(
+            output_path=wav_path,
+            duration=1.0,
+            samplerate=samplerate,
+            channels=1,
+            device_name=None,
+            buffer_seconds=0.5,
+        )
+

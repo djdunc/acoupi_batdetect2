@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 from acoupi import data
-from acoupi.components import DateFileManager, PWRecorder
+from acoupi.components import DateFileManager
 from acoupi.components.types import (
     RecordingCondition,
     RecordingSavingFilter,
@@ -16,7 +16,7 @@ from acoupi.components.types import (
 from astral import LocationInfo
 from astral.sun import sun
 
-from acoupi_batdetect2.scripts import trim_wav
+from acoupi_batdetect2.scripts import pw_record, trim_wav
 
 __all__ = [
     "HasHighConfidenceDetection",
@@ -24,6 +24,7 @@ __all__ = [
     "ModelSeparatedDateFileManager",
     "PrecisePWRecorder",
 ]
+
 
 
 
@@ -166,7 +167,7 @@ class ModelSeparatedDateFileManager(DateFileManager):
 
 
 @dataclass
-class PrecisePWRecorder(PWRecorder):
+class PrecisePWRecorder:
     """PipeWire audio recorder with precise sample count truncation.
 
     Records with an additional duration buffer to avoid PipeWire startup
@@ -174,15 +175,30 @@ class PrecisePWRecorder(PWRecorder):
     sample count.
     """
 
+    duration: float = 3.0
+    samplerate: int = 192000
+    audio_channels: int = 1
+    device_name: Optional[str] = None
+    audio_dir: Path = Path("/tmp")
     buffer_seconds: float = 0.5
 
     def record(self, output_path: Union[Path, str]) -> Path:
         """Record and trim audio output."""
-        # Record via base PWRecorder
-        recorded_path = super().record(output_path)
-        if recorded_path and Path(recorded_path).exists():
-            target_samples = int(self.duration * self.samplerate)
-            trim_wav(recorded_path, target_samples=target_samples)
-        return Path(recorded_path)
+        return pw_record(
+            output_path=output_path,
+            duration=self.duration,
+            samplerate=self.samplerate,
+            channels=self.audio_channels,
+            device_name=self.device_name,
+            buffer_seconds=self.buffer_seconds,
+        )
+
+    def check(self) -> None:
+        """Check recorder prerequisites."""
+        import shutil
+
+        if not shutil.which("pw-record"):
+            raise RuntimeError("pw-record command not found in PATH")
+
 
 
