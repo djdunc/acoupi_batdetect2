@@ -15,10 +15,9 @@ def test_batdetect2(recording: data.Recording):
 
     for det in detections.detections:
         assert type(det.detection_score) is float
-        assert type(det.location.start_time) is float
-        assert type(det.location.low_freq) is float
-        assert type(det.location.end_time) is float
-        assert type(det.location.high_freq) is float
+        assert isinstance(det.location.coordinates, tuple)
+        for coord in det.location.coordinates:
+            assert type(coord) is float
         for tag in det.tags:
             assert type(tag.confidence_score) is float
             assert type(tag.tag.value) is str
