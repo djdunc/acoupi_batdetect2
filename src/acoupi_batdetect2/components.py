@@ -141,6 +141,9 @@ class HasHighConfidenceDetection(RecordingSavingFilter):
 class ModelSeparatedDateFileManager(DateFileManager):
     """Date- and model-partitioned audio file storage manager."""
 
+    def __init__(self, directory: Union[Path, str] = Path(".")):
+        super().__init__(directory=directory)
+
     def get_file_path(self, recording: data.Recording) -> Path:
         category = "birds" if recording.samplerate < 90000 else "bats"
         date = recording.created_on
@@ -149,9 +152,11 @@ class ModelSeparatedDateFileManager(DateFileManager):
         )
 
         directory = (
-            Path(category)
+            self.directory
+            / Path(category)
             / Path(str(date.year))
             / Path(f"{date.month:02d}")
             / Path(f"{date.day:02d}")
         )
         return directory / Path(filename)
+

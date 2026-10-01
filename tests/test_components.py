@@ -110,8 +110,8 @@ def test_has_high_confidence_detection_filter():
     assert filter_.should_save_recording(rec, [high_output]) is True
 
 
-def test_model_separated_date_file_manager():
-    manager = ModelSeparatedDateFileManager()
+def test_model_separated_date_file_manager(tmp_path):
+    manager = ModelSeparatedDateFileManager(directory=tmp_path)
     dt = datetime.datetime(2026, 7, 15, 23, 30, 0)
 
     # Bat ultrasonic sample rate
@@ -123,6 +123,7 @@ def test_model_separated_date_file_manager():
         deployment=data.Deployment(name="test"),
     )
     bat_path = manager.get_file_path(bat_rec)
+    assert str(tmp_path) in str(bat_path)
     assert "bats" in str(bat_path)
     assert "2026/07/15" in str(bat_path)
 
@@ -135,5 +136,12 @@ def test_model_separated_date_file_manager():
         deployment=data.Deployment(name="test"),
     )
     bird_path = manager.get_file_path(bird_rec)
+    assert str(tmp_path) in str(bird_path)
     assert "birds" in str(bird_path)
     assert "2026/07/15" in str(bird_path)
+
+    # Also test default directory initialization
+    default_manager = ModelSeparatedDateFileManager()
+    default_path = default_manager.get_file_path(bat_rec)
+    assert "bats" in str(default_path)
+
