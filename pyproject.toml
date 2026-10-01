@@ -14,6 +14,9 @@ dependencies = [
   "pygments>=2.18.0",
 ]
 
+[project.scripts]
+acoupi = "acoupi_batdetect2.cli:main"
+
 requires-python = ">=3.9,<3.13"
 readme = "README.md"
 license = { text = "Creative Commons Attribution-NonCommercial 4.0 International" }
