@@ -56,9 +56,11 @@
    - Implemented comprehensive persistent setup defaults across all sub-models in [`src/acoupi_batdetect2/configuration.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/configuration.py).
    - Supported `Union` types for parser compatibility, `SecretStr` for MQTT passwords, and ISO string parsing for schedule times.
 6. **Upstream Acoupi Synchronization & Schema Alignment (Commit `5bd1da8`):**
-   - **PR 1 (`feat/cli-deployment-defaults`):** Persistent deployment start defaults (`name`, `latitude`, `longitude`) in `acoupi` CLI.
+   - **PR 1 (`feat/cli-deployment-defaults`):** Persistent deployment start defaults (`name`, `latitude`, `longitude`) in `acoupi` CLI with dynamic callable defaults and `show_default=True`.
    - **PR 2 (`feat/config-parser-defaults`):** Interactive setup parser defaults, `typing.Literal` click choices, and safe subclass type checks.
    - **PR 3 (`fix/celery-worker-recycling-and-test-isolation`):** Celery worker recycling (`worker_max_tasks_per_child=20`) in `CeleryConfig`.
+   - **PR 4 (`feat/pipewire-precise-recording`):** PipeWire startup latency buffer + exact sample trimming (`trim_wav`) in `PWRecorder`.
+   - **Staging Branch (`staging/combined-enhancements`):** All 4 PRs integrated and tested end-to-end on live Raspberry Pi 5.
    - **Data Schema Alignment:** Added `prediction_type=getattr(data.PredictionType, "EVENT", "event")` to `Detection` instantiation in `model.py` and `test_components.py`.
    - **UTC Datetimes:** Timezone-aware UTC timestamps across test suite (`datetime.datetime.now(datetime.timezone.utc)`).
 
