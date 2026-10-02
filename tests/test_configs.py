@@ -66,3 +66,43 @@ def test_schema_with_multi_tier_thresholds(
     assert schema.model.messaging_threshold == 0.4
     assert schema.model.saving_threshold == 0.6
 
+
+def test_saved_program_config_defaults(tmp_path, monkeypatch):
+    import json
+    from acoupi_batdetect2 import configuration
+
+    mock_config = tmp_path / "program.json"
+    saved_data = {
+        "timezone": "UTC",
+        "microphone": {
+            "samplerate": 250000,
+            "audio_channels": 1,
+            "device_name": "UltraMic 250K 16 bit r4",
+        },
+        "recording": {
+            "duration": 5,
+            "interval": 15,
+            "latitude": 51.5,
+            "longitude": -0.1,
+        },
+        "model": {
+            "detection_threshold": 0.22,
+            "messaging_threshold": 0.44,
+            "saving_threshold": 0.66,
+        },
+    }
+    mock_config.write_text(json.dumps(saved_data))
+
+    monkeypatch.setattr(configuration, "PROGRAM_CONFIG_PATHS", [mock_config])
+
+    schema = configuration.BatDetect2_ConfigSchema()
+    assert schema.timezone == "UTC"
+    assert schema.microphone.samplerate == 250000
+    assert schema.microphone.device_name == "UltraMic 250K 16 bit r4"
+    assert schema.recording.duration == 5
+    assert schema.recording.interval == 15
+    assert schema.recording.latitude == 51.5
+    assert schema.model.detection_threshold == 0.22
+    assert schema.model.messaging_threshold == 0.44
+    assert schema.model.saving_threshold == 0.66
+

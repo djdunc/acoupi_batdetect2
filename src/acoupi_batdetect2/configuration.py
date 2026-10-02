@@ -1,13 +1,135 @@
 """Batdetect2 Program Configuration Options."""
 
 import datetime
+import json
+from pathlib import Path
 from typing import Optional
 
+from acoupi.components import MicrophoneConfig
 from acoupi.programs.templates import (
     AudioConfiguration,
     DetectionProgramConfiguration,
+    MessagingConfig,
+    PathsConfiguration,
 )
 from pydantic import BaseModel, Field
+
+PROGRAM_CONFIG_PATHS = [
+    Path.home() / ".acoupi" / "config" / "program.json",
+    Path.home() / ".acoupi" / "config" / "program.conf",
+]
+
+
+def get_saved_program_config() -> dict:
+    """Retrieve saved program configuration if available."""
+    for config_path in PROGRAM_CONFIG_PATHS:
+        if config_path.exists():
+            try:
+                with open(config_path) as f:
+                    data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+            except Exception:
+                pass
+    return {}
+
+
+def get_default_microphone() -> MicrophoneConfig:
+    """Get default microphone configuration, using saved values if present."""
+    saved = get_saved_program_config().get("microphone")
+    if saved:
+        try:
+            return MicrophoneConfig(**saved)
+        except Exception:
+            pass
+    return MicrophoneConfig(
+        samplerate=192000,
+        audio_channels=1,
+        device_name="default",
+    )
+
+
+def get_default_paths() -> PathsConfiguration:
+    """Get default paths configuration, using saved values if present."""
+    saved = get_saved_program_config().get("paths")
+    if saved:
+        try:
+            return PathsConfiguration(**saved)
+        except Exception:
+            pass
+    return PathsConfiguration(
+        tmp_audio=Path.home() / ".acoupi" / "tmp",
+        recordings=Path.home() / ".acoupi" / "recordings",
+        db_metadata=Path.home() / ".acoupi" / "metadata.db",
+    )
+
+
+def get_default_messaging() -> MessagingConfig:
+    """Get default messaging configuration, using saved values if present."""
+    saved = get_saved_program_config().get("messaging")
+    if saved:
+        try:
+            return MessagingConfig(**saved)
+        except Exception:
+            pass
+    return MessagingConfig(
+        messages_db=Path.home() / ".acoupi" / "messages.db",
+    )
+
+
+def get_default_recording() -> "BatDetect2_AudioConfig":
+    """Get default recording configuration, using saved values if present."""
+    saved = get_saved_program_config().get("recording")
+    if saved:
+        try:
+            return BatDetect2_AudioConfig(**saved)
+        except Exception:
+            pass
+    return BatDetect2_AudioConfig()
+
+
+def get_default_model() -> "ModelConfig":
+    """Get default model configuration, using saved values if present."""
+    saved = get_saved_program_config().get("model")
+    if saved:
+        try:
+            return ModelConfig(**saved)
+        except Exception:
+            pass
+    return ModelConfig()
+
+
+def get_default_saving_filters() -> Optional["SaveRecordingFilter"]:
+    """Get default saving filters configuration, using saved values if present."""
+    saved = get_saved_program_config().get("saving_filters")
+    if saved is not None:
+        try:
+            return SaveRecordingFilter(**saved)
+        except Exception:
+            pass
+    return SaveRecordingFilter()
+
+
+def get_default_saving_managers() -> "SaveRecordingManager":
+    """Get default saving managers configuration, using saved values if present."""
+    saved = get_saved_program_config().get("saving_managers")
+    if saved:
+        try:
+            return SaveRecordingManager(**saved)
+        except Exception:
+            pass
+    return SaveRecordingManager()
+
+
+def get_default_summariser() -> Optional["Summariser"]:
+    """Get default summariser configuration, using saved values if present."""
+    saved = get_saved_program_config().get("summariser_config")
+    if saved is not None:
+        try:
+            return Summariser(**saved)
+        except Exception:
+            pass
+    return Summariser()
 
 
 class BatDetect2_AudioConfig(AudioConfiguration):
@@ -148,27 +270,40 @@ class BatDetect2_ConfigSchema(DetectionProgramConfiguration):
     model setup, file management, messaging, and summarisation.
     """
 
-    recording: BatDetect2_AudioConfig = Field(  # type: ignore
-        default_factory=BatDetect2_AudioConfig,
+    timezone: str = Field(
+        default_factory=lambda: get_saved_program_config().get(
+            "timezone", "Europe/London"
+        ),
     )
-    """Audio recording configuration."""
+
+    microphone: MicrophoneConfig = Field(  # type: ignore
+        default_factory=get_default_microphone,
+    )
+
+    paths: PathsConfiguration = Field(  # type: ignore
+        default_factory=get_default_paths,
+    )
+
+    messaging: MessagingConfig = Field(  # type: ignore
+        default_factory=get_default_messaging,
+    )
+
+    recording: BatDetect2_AudioConfig = Field(  # type: ignore
+        default_factory=get_default_recording,
+    )
 
     model: ModelConfig = Field(
-        default_factory=ModelConfig,
+        default_factory=get_default_model,
     )
-    """Model output configuration."""
 
     saving_filters: Optional[SaveRecordingFilter] = Field(
-        default_factory=SaveRecordingFilter,
+        default_factory=get_default_saving_filters,
     )
-    """Recording Saving Filters configuration for audio recordings."""
 
     saving_managers: SaveRecordingManager = Field(
-        default_factory=SaveRecordingManager,
+        default_factory=get_default_saving_managers,
     )
-    """Recording Saving Managers configuration for audio recordings."""
 
     summariser_config: Optional[Summariser] = Field(
-        default_factory=Summariser,
+        default_factory=get_default_summariser,
     )
-    """Summariser configuration."""
