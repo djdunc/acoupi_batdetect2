@@ -141,6 +141,7 @@ class BatDetect2(types.Model):
                         coords = tuple(float(c) for c in det.geometry.coordinates)
                         detections.append(
                             data.Detection(
+                                prediction_type=getattr(data.PredictionType, "EVENT", "event") if hasattr(data, "PredictionType") else "event",
                                 detection_score=score,
                                 location=data.BoundingBox.from_coordinates(
                                     coords[0],
@@ -175,6 +176,7 @@ class BatDetect2(types.Model):
 
         detections = [
             data.Detection(
+                prediction_type=getattr(data.PredictionType, "EVENT", "event") if hasattr(data, "PredictionType") else "event",
                 detection_score=float(detection["det_prob"]),
                 location=data.BoundingBox.from_coordinates(
                     float(detection["start_time"]),

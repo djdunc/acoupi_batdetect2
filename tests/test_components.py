@@ -90,6 +90,7 @@ def test_has_high_confidence_detection_filter():
         recording=rec,
         detections=[
             data.Detection(
+                prediction_type=getattr(data.PredictionType, "EVENT", "event") if hasattr(data, "PredictionType") else "event",
                 detection_score=0.4,
                 location=data.BoundingBox.from_coordinates(0.0, 10000.0, 0.1, 20000.0),
                 tags=[],
@@ -104,6 +105,7 @@ def test_has_high_confidence_detection_filter():
         recording=rec,
         detections=[
             data.Detection(
+                prediction_type=getattr(data.PredictionType, "EVENT", "event") if hasattr(data, "PredictionType") else "event",
                 detection_score=0.8,
                 location=data.BoundingBox.from_coordinates(0.0, 10000.0, 0.1, 20000.0),
                 tags=[],
