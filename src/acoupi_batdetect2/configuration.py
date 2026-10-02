@@ -132,45 +132,119 @@ def get_default_summariser() -> Optional["Summariser"]:
     return Summariser()
 
 
+def get_saved_recording_field(field_name: str, fallback=None):
+    """Get field value from saved recording configuration or deployment defaults."""
+    saved = get_saved_program_config().get("recording", {})
+    if isinstance(saved, dict) and field_name in saved and saved[field_name] is not None:
+        return saved[field_name]
+    if field_name in ("latitude", "longitude"):
+        try:
+            from acoupi_batdetect2.cli import get_defaults
+
+            defaults = get_defaults()
+            if field_name in defaults and defaults[field_name] is not None:
+                return float(defaults[field_name])
+        except Exception:
+            pass
+    return fallback
+
+
+def get_saved_model_field(field_name: str, fallback=None):
+    """Get field value from saved model configuration."""
+    saved = get_saved_program_config().get("model", {})
+    if isinstance(saved, dict) and field_name in saved and saved[field_name] is not None:
+        return float(saved[field_name])
+    return fallback
+
+
+def get_saved_filter_field(field_name: str, fallback=None):
+    """Get field value from saved saving_filters configuration."""
+    saved = get_saved_program_config().get("saving_filters", {})
+    if isinstance(saved, dict) and field_name in saved and saved[field_name] is not None:
+        return saved[field_name]
+    return fallback
+
+
+def get_saved_manager_field(field_name: str, fallback=None):
+    """Get field value from saved saving_managers configuration."""
+    saved = get_saved_program_config().get("saving_managers", {})
+    if isinstance(saved, dict) and field_name in saved and saved[field_name] is not None:
+        return saved[field_name]
+    return fallback
+
+
+def get_saved_summariser_field(field_name: str, fallback=None):
+    """Get field value from saved summariser configuration."""
+    saved = get_saved_program_config().get("summariser_config", {})
+    if isinstance(saved, dict) and field_name in saved and saved[field_name] is not None:
+        return saved[field_name]
+    return fallback
+
+
 class BatDetect2_AudioConfig(AudioConfiguration):
     """Audio Configuration schema."""
 
+    duration: float = Field(
+        default_factory=lambda: get_saved_recording_field("duration", 3.0),
+    )
+    """Duration of recording in seconds."""
+
+    interval: float = Field(
+        default_factory=lambda: get_saved_recording_field("interval", 10.0),
+    )
+    """Interval between recordings in seconds."""
+
+    chunksize: int = Field(
+        default_factory=lambda: get_saved_recording_field("chunksize", 8192),
+    )
+    """Chunk size for recording."""
+
     schedule_start: datetime.time = Field(
-        default=datetime.time(hour=19, minute=0, second=0),
+        default_factory=lambda: get_saved_recording_field(
+            "schedule_start", datetime.time(hour=19, minute=0, second=0)
+        ),
     )
     """Start time for recording schedule."""
 
     schedule_end: datetime.time = Field(
-        default=datetime.time(hour=7, minute=0, second=0),
+        default_factory=lambda: get_saved_recording_field(
+            "schedule_end", datetime.time(hour=7, minute=0, second=0)
+        ),
     )
     """End time for recording schedule."""
 
     use_nocturnal_schedule: bool = Field(
-        default=True,
+        default_factory=lambda: get_saved_recording_field(
+            "use_nocturnal_schedule", True
+        ),
         description="Whether to use solar nocturnal schedule (IsNightTime) for recording",
     )
     """Whether to use solar nocturnal schedule."""
 
     buffer_before_sunset_minutes: int = Field(
-        default=30,
+        default_factory=lambda: get_saved_recording_field(
+            "buffer_before_sunset_minutes", 30
+        ),
         description="Minutes before sunset to begin nocturnal recording window",
     )
     """Minutes before sunset to begin recording."""
 
     buffer_after_sunrise_minutes: int = Field(
-        default=30,
+        default_factory=lambda: get_saved_recording_field(
+            "buffer_after_sunrise_minutes", 30
+        ),
         description="Minutes after sunrise to end nocturnal recording window",
     )
     """Minutes after sunrise to end recording."""
 
     latitude: Optional[float] = Field(
-        default=None,
+        default_factory=lambda: get_saved_recording_field("latitude", None),
         description="Latitude for astral solar calculations",
     )
     """Latitude coordinate."""
 
     longitude: Optional[float] = Field(
-        default=None,
+        default_factory=lambda: get_saved_recording_field("longitude", None),
         description="Longitude for astral solar calculations",
     )
     """Longitude coordinate."""
@@ -180,19 +254,19 @@ class ModelConfig(BaseModel):
     """Model and multi-tier threshold configuration."""
 
     detection_threshold: float = Field(
-        default=0.3,
+        default_factory=lambda: get_saved_model_field("detection_threshold", 0.3),
         description="Threshold used to determine which detections are stored in the local database",
         ge=0.0,
         le=1.0,
     )
     messaging_threshold: float = Field(
-        default=0.5,
+        default_factory=lambda: get_saved_model_field("messaging_threshold", 0.5),
         description="Threshold used to determine which detections are sent as messages",
         ge=0.0,
         le=1.0,
     )
     saving_threshold: float = Field(
-        default=0.7,
+        default_factory=lambda: get_saved_model_field("saving_threshold", 0.7),
         description="Threshold used to determine which recordings should be saved to disk",
         ge=0.0,
         le=1.0,
@@ -205,25 +279,47 @@ BatDetect2Config = ModelConfig
 class SaveRecordingFilter(BaseModel):
     """Saving Filters for audio recordings configuration."""
 
-    starttime: datetime.time = datetime.time(hour=19, minute=0, second=0)
+    starttime: datetime.time = Field(
+        default_factory=lambda: get_saved_filter_field(
+            "starttime", datetime.time(hour=19, minute=0, second=0)
+        ),
+    )
     """Start time of the interval for which to save recordings."""
 
-    endtime: datetime.time = datetime.time(hour=7, minute=0, second=0)
+    endtime: datetime.time = Field(
+        default_factory=lambda: get_saved_filter_field(
+            "endtime", datetime.time(hour=7, minute=0, second=0)
+        ),
+    )
     """End time of the interval for which to save recordings."""
 
-    before_dawndusk_duration: int = 0
+    before_dawndusk_duration: int = Field(
+        default_factory=lambda: get_saved_filter_field(
+            "before_dawndusk_duration", 0
+        ),
+    )
     """Optional duration in minutes before dawn/dusk to save recordings."""
 
-    after_dawndusk_duration: int = 0
+    after_dawndusk_duration: int = Field(
+        default_factory=lambda: get_saved_filter_field(
+            "after_dawndusk_duration", 0
+        ),
+    )
     """Optional duration in minutes after dawn/dusk to save recordings."""
 
-    frequency_duration: int = 0
+    frequency_duration: int = Field(
+        default_factory=lambda: get_saved_filter_field("frequency_duration", 0),
+    )
     """Optional duration in minutes to save recordings using the frequency filter."""
 
-    frequency_interval: int = 0
+    frequency_interval: int = Field(
+        default_factory=lambda: get_saved_filter_field("frequency_interval", 0),
+    )
     """Optional periodic interval in minutes to save recordings."""
 
-    saving_threshold: float = 0.3
+    saving_threshold: float = Field(
+        default_factory=lambda: get_saved_filter_field("saving_threshold", 0.3),
+    )
     """Minimum threshold of detections from a recording to save it."""
 
 
@@ -233,32 +329,56 @@ class SaveRecordingManager(BaseModel):
     (path to storage, name of files, saving threshold).
     """
 
-    true_dir: str = "bats"
+    true_dir: str = Field(
+        default_factory=lambda: get_saved_manager_field("true_dir", "bats"),
+    )
     """Directory for saving recordings with confident detections."""
 
-    false_dir: str = "no_bats"
+    false_dir: str = Field(
+        default_factory=lambda: get_saved_manager_field("false_dir", "no_bats"),
+    )
     """Directory for saving recordings with uncertain detections."""
 
-    timeformat: str = "%Y%m%d_%H%M%S"
+    timeformat: str = Field(
+        default_factory=lambda: get_saved_manager_field(
+            "timeformat", "%Y%m%d_%H%M%S"
+        ),
+    )
     """Time format for naming the audio recording files."""
 
-    bat_threshold: float = 0.5
+    bat_threshold: float = Field(
+        default_factory=lambda: get_saved_manager_field("bat_threshold", 0.5),
+    )
     """Minimum threshold of detections from a recording to save it."""
 
 
 class Summariser(BaseModel):
     """Summariser configuration."""
 
-    interval: Optional[float] = 3600  # interval in seconds
+    interval: Optional[float] = Field(
+        default_factory=lambda: get_saved_summariser_field("interval", 3600.0),
+    )
     """Interval (in seconds) for summarising detections."""
 
-    low_band_threshold: Optional[float] = 0.0
+    low_band_threshold: Optional[float] = Field(
+        default_factory=lambda: get_saved_summariser_field(
+            "low_band_threshold", 0.0
+        ),
+    )
     """Optional low band threshold to summarise detections."""
 
-    mid_band_threshold: Optional[float] = 0.0
+    mid_band_threshold: Optional[float] = Field(
+        default_factory=lambda: get_saved_summariser_field(
+            "mid_band_threshold", 0.0
+        ),
+    )
     """Optional mid band threshold to summarise detections."""
 
-    high_band_threshold: Optional[float] = 0.0
+    high_band_threshold: Optional[float] = Field(
+        default_factory=lambda: get_saved_summariser_field(
+            "high_band_threshold", 0.0
+        ),
+    )
     """Optional high band threshold to summarise detections."""
 
 
