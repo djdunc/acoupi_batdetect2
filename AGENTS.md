@@ -47,7 +47,7 @@
 
 ---
 
-### Active Branch: `feat/pipewire-ultrasonic` (commit `7082283`)
+### Active Branch: `feat/pipewire-ultrasonic` (commit `4b170ad`)
 1. **PipeWire Ultrasonic Rates Setup ([`src/acoupi_batdetect2/scripts.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/scripts.py)):**
    - Added `setup_pipewire()` to generate `~/.config/pipewire/pipewire.conf.d/10-rates.conf` (rates: 32k, 48k, 96k, 192k, 250k, 384k).
    - Ensured all setup logging prints to `sys.stderr`.
@@ -63,6 +63,7 @@
    - Sub-models (`BatDetect2_AudioConfig`, `BatDetect2_MQTTConfig`, `BatDetect2_MessagingConfig`, `BatDetect2_MicrophoneConfig`, `BatDetect2_PathsConfig`, `ModelConfig`, `SaveRecordingFilter`, `SaveRecordingManager`, `Summariser`) load existing `program.json` / `deployment_defaults.json` on a per-field basis during `acoupi setup --program acoupi_batdetect2.program`.
    - Schema fields accept `Union` of BatDetect2 and base Acoupi models for parser compatibility.
    - Uses `SecretStr` for `BatDetect2_MQTTConfig.password` for Acoupi `MQTTMessenger` compatibility.
+   - Parses ISO strings into `datetime.time` objects for schedule times and keeps standalone `ModelConfig()` defaults intact.
 
 ---
 
