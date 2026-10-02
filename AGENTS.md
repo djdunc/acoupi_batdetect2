@@ -33,7 +33,7 @@
 
 ## 2. Implementation Progress & Current State
 
-### Completed & Merged into `main` (commit `bc622e9`)
+### Completed & Merged into `main` (commit `bcead00`)
 1. **NumPy & Type Serialization Fix:**
    - Explicitly cast all detection scores, bounding boxes, and tag scores to native `float` / `str` in [`src/acoupi_batdetect2/model.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/model.py).
 2. **Batched Inference & `inference_mode()` (Branch `perf/batched-inference-mode`):**
@@ -45,6 +45,7 @@
 4. **Reusable Components & Astral Nocturnal Schedule (Branch `feat/is-night-time-schedule`):**
    - Created [`src/acoupi_batdetect2/components.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/components.py) with `IsNightTime`, `HasHighConfidenceDetection`, and `ModelSeparatedDateFileManager`.
    - Wired `get_recording_conditions()` in `program.py`.
+   - Fixed `IsNightTime.should_record()` to use `datetime.datetime.now(datetime.timezone.utc)` instead of non-existent `data.utc_now()`.
 5. **PipeWire Ultrasonic Rates & Setup Defaults (Branch `feat/pipewire-ultrasonic`):**
    - Added `setup_pipewire()` generating `10-rates.conf` (rates: 32k, 48k, 96k, 192k, 250k, 384k) in [`src/acoupi_batdetect2/scripts.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/scripts.py).
    - Implemented `trim_wav()` and `pw_record()` with graceful `SIGINT` shutdown and sample-accurate trimming.
@@ -62,5 +63,6 @@
 * **Test Suite:** All 21 tests (`pytest -v`) passing on Raspberry Pi 5 (`pi@33PH-acoupi-bat`).
 * **Live Services:** `acoupi.service` and `acoupi-beat.service` active and healthy.
 * **Recording Workers:** `recording` and `default` workers running cleanly with PipeWire audio capture and nocturnal scheduling.
+
 
 
