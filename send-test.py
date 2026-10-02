@@ -28,6 +28,7 @@ rec = data.Recording(
     deployment=data.Deployment(name=deployment_name),
 )
 print("\n1. Running Detection Task...")
+program.store.store_recording(rec)
 program.tasks["detection_task"](rec)
 unsent = program.message_store.get_unsent_messages()
 print(f"Queued {len(unsent)} message(s) in {config.messaging.messages_db}")
