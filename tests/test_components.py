@@ -32,6 +32,9 @@ def test_is_night_time_midnight_and_noon():
     noon = datetime.datetime(2026, 6, 21, 12, 0, 0, tzinfo=zoneinfo.ZoneInfo(tz))
     assert condition.should_record(noon) is False
 
+    # Default now (no arguments)
+    assert isinstance(condition.should_record(), bool)
+
 
 def test_is_night_time_buffers():
     """Verify before sunset and after sunrise buffers."""

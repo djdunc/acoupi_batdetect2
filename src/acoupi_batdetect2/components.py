@@ -93,7 +93,7 @@ class IsNightTime(RecordingCondition):
             True if within the nocturnal recording window, False otherwise.
         """
         if now is None:
-            now = data.utc_now()
+            now = datetime.datetime.now(datetime.timezone.utc)
 
         if now.tzinfo is None:
             now = now.replace(tzinfo=datetime.timezone.utc)
