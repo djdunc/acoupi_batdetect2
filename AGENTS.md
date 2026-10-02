@@ -47,7 +47,7 @@
 
 ---
 
-### Active Branch: `feat/pipewire-ultrasonic` (commit `05accd5`)
+### Active Branch: `feat/pipewire-ultrasonic` (commit `8e48c13`)
 1. **PipeWire Ultrasonic Rates Setup ([`src/acoupi_batdetect2/scripts.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/scripts.py)):**
    - Added `setup_pipewire()` to generate `~/.config/pipewire/pipewire.conf.d/10-rates.conf` (rates: 32k, 48k, 96k, 192k, 250k, 384k).
    - Ensured all setup logging prints to `sys.stderr`.
@@ -59,8 +59,8 @@
    - Prepending virtualenv `bin` to `PATH` for worker subprocesses in `program.py`.
    - Added `setup_celery()` setting `worker_max_tasks_per_child=20`.
    - Configured `memory://` broker and `cache+memory://` backend in `tests/conftest.py` to prevent test collisions with live RabbitMQ daemon.
-4. **Persistent Setup Configuration Defaults ([`src/acoupi_batdetect2/configuration.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/configuration.py)):**
-   - Auto-loads existing `~/.acoupi/config/program.json` (or `program.conf`) to populate default values for all schema fields during `acoupi setup --program acoupi_batdetect2.program`.
+4. **Comprehensive Persistent Setup Defaults ([`src/acoupi_batdetect2/configuration.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/configuration.py)):**
+   - Sub-models (`BatDetect2_AudioConfig`, `BatDetect2_MQTTConfig`, `BatDetect2_MessagingConfig`, `BatDetect2_MicrophoneConfig`, `BatDetect2_PathsConfig`, `ModelConfig`, `SaveRecordingFilter`, `SaveRecordingManager`, `Summariser`) load existing `program.json` / `deployment_defaults.json` on a per-field basis during `acoupi setup --program acoupi_batdetect2.program`.
 
 ---
 
