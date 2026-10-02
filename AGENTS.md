@@ -47,40 +47,32 @@
 
 ---
 
-### Active Branch: `feat/pipewire-ultrasonic` (commit `513a3ff`)
+### Active Branch: `feat/pipewire-ultrasonic` (commit `fc9669b`)
 1. **PipeWire Ultrasonic Rates Setup ([`src/acoupi_batdetect2/scripts.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/scripts.py)):**
    - Added `setup_pipewire()` to generate `~/.config/pipewire/pipewire.conf.d/10-rates.conf` (rates: 32k, 48k, 96k, 192k, 250k, 384k).
    - Ensured all setup logging prints to `sys.stderr`.
    - Integrated `setup_audio()` into `BatDetect2_Program.setup()`.
 2. **Precise Audio Trimming & Recorder:**
-   - Implemented `trim_wav()` and `pw_record()` with +0.5s duration latency buffer.
+   - Implemented `trim_wav()` and `pw_record()` using `Popen` with `SIGINT` graceful shutdown and sample trimming.
    - Added `PrecisePWRecorder` to `components.py`.
-3. **Celery Worker Safeguards:**
+3. **Celery Worker Safeguards & Test Fixes:**
    - Prepending virtualenv `bin` to `PATH` for worker subprocesses in `program.py`.
    - Added `setup_celery()` setting `worker_max_tasks_per_child=20`.
+   - Configured `memory://` broker and `cache+memory://` backend in `tests/conftest.py` to prevent test collisions with live RabbitMQ daemon.
 
 ---
 
 ## 3. Test Suite Status & Resumption Plan
 
-### Test Results on Pi:
-- **14 PASSED / 6 Celery Integration Errors:**
-  - `test_components.py` (5 passed)
-  - `test_configs.py` (4 passed)
-  - `test_model.py` (1 passed)
-  - `test_scripts.py` (4 passed)
-  - `test_file_management.py` (5 errors at worker setup)
-  - `test_program.py` (1 error at worker setup)
-
-### Root Cause for Worker Setup Errors:
-- `celery_worker` in `celery.contrib.pytest` tries to start an in-process worker that connects to RabbitMQ (`amqp://guest@127.0.0.1:5672`) because `CeleryConfig().model_dump()` provides the production AMQP broker URL instead of test memory transport.
-- When `worker.start_worker` pings `'celery.ping'`, task routing / broker connection on localhost fails to receive the ping return value.
-
-### Plan When Back:
-1. **Fix Celery Test Broker Configuration in `tests/conftest.py`:**
-   - Override `celery_config` to use in-memory/eager execution for testing (e.g. `broker_url="memory://"`, `result_backend="cache+memory://"`, `task_always_eager=True` or isolated test app) so integration tests do not require a live RabbitMQ daemon.
-2. **Merge `feat/pipewire-ultrasonic` into `main` after all 20 tests pass.**
-3. **Verify Guano RAM Disk OOM Prevention (Item C):**
-   - Ensure `guano.GuanoFile.write(make_backup=False)` is used when tagging in temporary directories.
-4. **Deploy & Live Field Test on Pi (`acoupi setup --program acoupi_batdetect2.program`).**
+### Verification on Pi:
+1. Pull branch updates: `git pull origin feat/pipewire-ultrasonic`
+2. Run test suite: `pytest -v`
+3. Verify all 20 tests pass.
+4. Merge `feat/pipewire-ultrasonic` into `main`.
+5. Run deployment setup on Pi: `acoupi setup --program acoupi_batdetect2.program`
+6. Reload and start systemd units:
+   ```bash
+   systemctl --user daemon-reload
+   systemctl --user restart acoupi.service acoupi-beat.service
+   ```
 
