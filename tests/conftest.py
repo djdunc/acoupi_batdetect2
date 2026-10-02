@@ -119,13 +119,6 @@ def celery_includes():
 
 
 @pytest.fixture(scope="session")
-def celery_parameters():
-    return {
-        "set_as_current": True,
-    }
-
-
-@pytest.fixture(scope="session")
 def celery_config():
     conf = CeleryConfig().model_dump()
     conf["broker_url"] = "memory://"
