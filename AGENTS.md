@@ -58,6 +58,7 @@
 6. **Upstream Acoupi Synchronization & Schema Alignment (Commit `5bd1da8`):**
    - **PR 1 (`feat/cli-deployment-defaults`):** Persistent deployment start defaults (`name`, `latitude`, `longitude`) in `acoupi` CLI.
    - **PR 2 (`feat/config-parser-defaults`):** Interactive setup parser defaults, `typing.Literal` click choices, and safe subclass type checks.
+   - **PR 3 (`fix/celery-worker-recycling-and-test-isolation`):** Celery worker recycling (`worker_max_tasks_per_child=20`) in `CeleryConfig`.
    - **Data Schema Alignment:** Added `prediction_type=getattr(data.PredictionType, "EVENT", "event")` to `Detection` instantiation in `model.py` and `test_components.py`.
    - **UTC Datetimes:** Timezone-aware UTC timestamps across test suite (`datetime.datetime.now(datetime.timezone.utc)`).
 
