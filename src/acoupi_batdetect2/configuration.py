@@ -10,7 +10,7 @@ from acoupi.programs.templates import (
     MessagingConfig,
     PathsConfiguration,
 )
-from pydantic import BaseModel, Field, SecretStr, field_serializer
+from pydantic import BaseModel, Field, SecretStr, field_serializer, field_validator
 
 PROGRAM_CONFIG_PATHS = [
     Path.home() / ".acoupi" / "config" / "program.json",
@@ -398,7 +398,10 @@ def get_saved_mqtt_field(field_name: str, fallback=None):
     if isinstance(saved_messaging, dict):
         saved_mqtt = saved_messaging.get("mqtt")
         if isinstance(saved_mqtt, dict) and field_name in saved_mqtt and saved_mqtt[field_name] is not None:
-            return saved_mqtt[field_name]
+            val = saved_mqtt[field_name]
+            if field_name == "transport" and isinstance(val, str) and "." in val:
+                return val.split(".", 1)[-1].lower()
+            return val
     return fallback
 
 
@@ -470,6 +473,15 @@ class BatDetect2_MQTTConfig(MQTTConfig):
         default_factory=lambda: int(get_saved_mqtt_field("timeout", 5)),
     )
     """MQTT connection timeout in seconds."""
+
+    @field_validator("transport", mode="before", check_fields=False)
+    @classmethod
+    def sanitize_transport(cls, v):
+        if isinstance(v, str) and "." in v:
+            return v.split(".", 1)[-1].lower()
+        if hasattr(v, "value"):
+            return v.value
+        return v
 
     @field_serializer("password", when_used="json")
     def dump_password(self, value: Optional[SecretStr]):
