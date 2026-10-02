@@ -134,7 +134,13 @@ def get_saved_recording_field(field_name: str, fallback=None):
     """Get field value from saved recording configuration or deployment defaults."""
     saved = get_saved_program_config().get("recording", {})
     if isinstance(saved, dict) and field_name in saved and saved[field_name] is not None:
-        return saved[field_name]
+        val = saved[field_name]
+        if field_name in ("schedule_start", "schedule_end") and isinstance(val, str):
+            try:
+                return datetime.time.fromisoformat(val)
+            except Exception:
+                pass
+        return val
     if field_name in ("latitude", "longitude"):
         try:
             from acoupi_batdetect2.cli import get_defaults
@@ -159,7 +165,13 @@ def get_saved_filter_field(field_name: str, fallback=None):
     """Get field value from saved saving_filters configuration."""
     saved = get_saved_program_config().get("saving_filters", {})
     if isinstance(saved, dict) and field_name in saved and saved[field_name] is not None:
-        return saved[field_name]
+        val = saved[field_name]
+        if field_name in ("starttime", "endtime") and isinstance(val, str):
+            try:
+                return datetime.time.fromisoformat(val)
+            except Exception:
+                pass
+        return val
     return fallback
 
 
@@ -252,19 +264,19 @@ class ModelConfig(BaseModel):
     """Model and multi-tier threshold configuration."""
 
     detection_threshold: float = Field(
-        default_factory=lambda: get_saved_model_field("detection_threshold", 0.3),
+        default=0.3,
         description="Threshold used to determine which detections are stored in the local database",
         ge=0.0,
         le=1.0,
     )
     messaging_threshold: float = Field(
-        default_factory=lambda: get_saved_model_field("messaging_threshold", 0.5),
+        default=0.5,
         description="Threshold used to determine which detections are sent as messages",
         ge=0.0,
         le=1.0,
     )
     saving_threshold: float = Field(
-        default_factory=lambda: get_saved_model_field("saving_threshold", 0.7),
+        default=0.7,
         description="Threshold used to determine which recordings should be saved to disk",
         ge=0.0,
         le=1.0,
@@ -574,7 +586,7 @@ class BatDetect2_ConfigSchema(DetectionProgramConfiguration):
     )
 
     model: ModelConfig = Field(
-        default_factory=ModelConfig,
+        default_factory=get_default_model,
     )
 
     saving_filters: Optional[SaveRecordingFilter] = Field(
