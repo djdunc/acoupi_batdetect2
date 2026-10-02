@@ -474,6 +474,20 @@ class BatDetect2_MQTTConfig(MQTTConfig):
     )
     """MQTT connection timeout in seconds."""
 
+    use_message_type: bool = Field(
+        default_factory=lambda: bool(
+            get_saved_mqtt_field("use_message_type", False)
+        ),
+    )
+    """Use message type as part of the topic."""
+
+    retain_heartbeat: bool = Field(
+        default_factory=lambda: bool(
+            get_saved_mqtt_field("retain_heartbeat", True)
+        ),
+    )
+    """Send heartbeat messages with MQTT retain flag set to True."""
+
     @field_validator("transport", mode="before", check_fields=False)
     @classmethod
     def sanitize_transport(cls, v):
