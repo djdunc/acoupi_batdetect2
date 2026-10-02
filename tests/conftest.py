@@ -40,7 +40,7 @@ def recording() -> data.Recording:
         path=TEST_RECORDING,
         duration=3,
         samplerate=192000,
-        created_on=datetime.datetime.now(),
+        created_on=datetime.datetime.now(datetime.timezone.utc),
         deployment=data.Deployment(
             name="test",
         ),
@@ -53,7 +53,7 @@ def notbat_recording() -> data.Recording:
         path=TEST_RECORDING_NOBAT,
         duration=3,
         samplerate=192000,
-        created_on=datetime.datetime.now(),
+        created_on=datetime.datetime.now(datetime.timezone.utc),
         deployment=data.Deployment(
             name="test_nobats",
         ),

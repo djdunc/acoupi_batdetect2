@@ -25,7 +25,7 @@ def temp_recording(
         path=temp_recording_path,
         duration=3,
         samplerate=192000,
-        created_on=datetime.datetime.now(),
+        created_on=datetime.datetime.now(datetime.timezone.utc),
         deployment=data.Deployment(
             name="test",
         ),
@@ -52,7 +52,7 @@ def nobat_temp_recording(
         path=temp_recording_path_nobat,
         duration=3,
         samplerate=192000,
-        created_on=datetime.datetime.now(),
+        created_on=datetime.datetime.now(datetime.timezone.utc),
         deployment=data.Deployment(
             name="test",
         ),

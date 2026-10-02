@@ -80,7 +80,7 @@ def test_has_high_confidence_detection_filter():
         path="dummy.wav",
         duration=3.0,
         samplerate=192000,
-        created_on=datetime.datetime.now(),
+        created_on=datetime.datetime.now(datetime.timezone.utc),
         deployment=data.Deployment(name="test"),
     )
 
@@ -115,7 +115,7 @@ def test_has_high_confidence_detection_filter():
 
 def test_model_separated_date_file_manager(tmp_path):
     manager = ModelSeparatedDateFileManager(directory=tmp_path)
-    dt = datetime.datetime(2026, 7, 15, 23, 30, 0)
+    dt = datetime.datetime(2026, 7, 15, 23, 30, 0, tzinfo=datetime.timezone.utc)
 
     # Bat ultrasonic sample rate
     bat_rec = data.Recording(

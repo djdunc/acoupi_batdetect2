@@ -24,7 +24,7 @@ rec = data.Recording(
     path=unique_audio_path,
     duration=3.0,
     samplerate=192000,
-    created_on=datetime.datetime.now(),
+    created_on=datetime.datetime.now(datetime.timezone.utc),
     deployment=data.Deployment(name=deployment_name),
 )
 print("\n1. Running Detection Task...")

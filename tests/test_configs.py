@@ -12,7 +12,11 @@ from acoupi_batdetect2.configuration import (
 def test_audio_config_defaults_have_been_overwriten(
     microphone_config,
     messaging_config,
+    monkeypatch,
 ):
+    from acoupi_batdetect2 import configuration
+
+    monkeypatch.setattr(configuration, "PROGRAM_CONFIG_PATHS", [])
     config = BatDetect2_ConfigSchema(
         microphone=microphone_config,
         messaging=messaging_config,
