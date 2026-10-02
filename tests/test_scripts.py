@@ -52,15 +52,21 @@ def test_pw_record_calls_subprocess(tmp_path):
     total_frames = int(1.5 * samplerate)
     dummy_data = b"\x00\x00" * total_frames
 
-    def fake_subprocess_run(cmd, *args, **kwargs):
+    mock_proc = MagicMock()
+    mock_proc.returncode = 0
+    mock_proc.communicate.return_value = (b"", b"")
+
+    def fake_popen(cmd, *args, **kwargs):
         with wave.open(str(output_wav), "wb") as w:
             w.setnchannels(1)
             w.setsampwidth(2)
             w.setframerate(samplerate)
             w.writeframes(dummy_data)
-        return MagicMock(returncode=0)
+        return mock_proc
 
-    with patch("subprocess.run", side_effect=fake_subprocess_run) as mock_run:
+    with patch("subprocess.Popen", side_effect=fake_popen) as mock_popen, patch(
+        "time.sleep"
+    ):
         res = pw_record(
             output_wav,
             duration=1.0,
@@ -68,7 +74,8 @@ def test_pw_record_calls_subprocess(tmp_path):
             buffer_seconds=0.5,
         )
         assert res == output_wav
-        mock_run.assert_called_once()
+        mock_popen.assert_called_once()
+        mock_proc.send_signal.assert_called_once()
         # Verify trimmed to 1.0s (192000 frames)
         with wave.open(str(output_wav), "rb") as r:
             assert r.getnframes() == 192000

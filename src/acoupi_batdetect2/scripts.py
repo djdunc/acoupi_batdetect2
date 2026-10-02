@@ -3,9 +3,11 @@
 import logging
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 import wave
 from pathlib import Path
 from typing import Optional, Union
@@ -186,19 +188,28 @@ def pw_record(
     cmd.append(str(dest))
 
     total_duration = duration + buffer_seconds
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
     try:
-        subprocess.run(
-            cmd,
-            timeout=total_duration + 2.0,
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-    except subprocess.TimeoutExpired:
-        pass
-    except subprocess.CalledProcessError as e:
-        err_msg = e.stderr.decode("utf-8", errors="replace") if e.stderr else ""
-        raise RuntimeError(f"pw-record failed ({e.returncode}): {err_msg}") from e
+        time.sleep(total_duration)
+        proc.send_signal(signal.SIGINT)
+        try:
+            _, stderr = proc.communicate(timeout=2.0)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            _, stderr = proc.communicate()
+    except Exception:
+        proc.kill()
+        proc.communicate()
+        raise
+
+    if proc.returncode not in (0, -signal.SIGINT, 130, -2):
+        err_msg = stderr.decode("utf-8", errors="replace") if stderr else ""
+        if err_msg and ("pw-record" in err_msg or proc.returncode > 0):
+            raise RuntimeError(f"pw-record failed ({proc.returncode}): {err_msg}")
 
     if dest.exists():
         target_samples = int(duration * samplerate)
