@@ -10,7 +10,7 @@ from acoupi.programs.templates import (
     MessagingConfig,
     PathsConfiguration,
 )
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 PROGRAM_CONFIG_PATHS = [
     Path.home() / ".acoupi" / "config" / "program.json",
@@ -414,7 +414,17 @@ def get_saved_path_field(field_name: str, fallback=None):
     return fallback
 
 
-class BatDetect2_MQTTConfig(BaseModel):
+def get_saved_mqtt_password() -> Optional[SecretStr]:
+    """Get saved MQTT password as SecretStr."""
+    val = get_saved_mqtt_field("password")
+    if val is None:
+        return None
+    if isinstance(val, SecretStr):
+        return val
+    return SecretStr(str(val))
+
+
+class BatDetect2_MQTTConfig(MQTTConfig):
     """MQTT Configuration schema with persistent defaults."""
 
     host: str = Field(
@@ -439,8 +449,8 @@ class BatDetect2_MQTTConfig(BaseModel):
     )
     """MQTT broker username."""
 
-    password: Optional[str] = Field(
-        default_factory=lambda: get_saved_mqtt_field("password", None),
+    password: Optional[SecretStr] = Field(
+        default_factory=get_saved_mqtt_password,
     )
     """MQTT broker password."""
 

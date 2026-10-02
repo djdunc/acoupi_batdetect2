@@ -97,6 +97,7 @@ def test_saved_program_config_defaults(tmp_path, monkeypatch):
                 "port": 1883,
                 "topic": "test/bats",
                 "username": "batuser",
+                "password": "secret_password",
             },
         },
     }
@@ -119,4 +120,5 @@ def test_saved_program_config_defaults(tmp_path, monkeypatch):
     assert schema.messaging.mqtt.host == "test.mosquitto.org"
     assert schema.messaging.mqtt.topic == "test/bats"
     assert schema.messaging.mqtt.username == "batuser"
+    assert schema.messaging.mqtt.password.get_secret_value() == "secret_password"
 
