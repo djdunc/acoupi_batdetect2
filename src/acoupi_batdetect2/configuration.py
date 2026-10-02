@@ -382,6 +382,159 @@ class Summariser(BaseModel):
     """Optional high band threshold to summarise detections."""
 
 
+def get_saved_mqtt_field(field_name: str, fallback=None):
+    """Get field value from saved messaging.mqtt configuration."""
+    saved_messaging = get_saved_program_config().get("messaging", {})
+    if isinstance(saved_messaging, dict):
+        saved_mqtt = saved_messaging.get("mqtt")
+        if isinstance(saved_mqtt, dict) and field_name in saved_mqtt and saved_mqtt[field_name] is not None:
+            return saved_mqtt[field_name]
+    return fallback
+
+
+def get_saved_messaging_field(field_name: str, fallback=None):
+    """Get field value from saved messaging configuration."""
+    saved = get_saved_program_config().get("messaging", {})
+    if isinstance(saved, dict) and field_name in saved and saved[field_name] is not None:
+        return saved[field_name]
+    return fallback
+
+
+def get_saved_mic_field(field_name: str, fallback=None):
+    """Get field value from saved microphone configuration."""
+    saved = get_saved_program_config().get("microphone", {})
+    if isinstance(saved, dict) and field_name in saved and saved[field_name] is not None:
+        return saved[field_name]
+    return fallback
+
+
+def get_saved_path_field(field_name: str, fallback=None):
+    """Get field value from saved paths configuration."""
+    saved = get_saved_program_config().get("paths", {})
+    if isinstance(saved, dict) and field_name in saved and saved[field_name] is not None:
+        return Path(saved[field_name])
+    return fallback
+
+
+class BatDetect2_MQTTConfig(BaseModel):
+    """MQTT Configuration schema with persistent defaults."""
+
+    host: str = Field(
+        default_factory=lambda: get_saved_mqtt_field("host", "localhost"),
+    )
+    """MQTT broker host address."""
+
+    port: int = Field(
+        default_factory=lambda: int(get_saved_mqtt_field("port", 1883)),
+    )
+    """MQTT broker port."""
+
+    topic: str = Field(
+        default_factory=lambda: get_saved_mqtt_field(
+            "topic", "acoupi/batdetect2"
+        ),
+    )
+    """MQTT topic."""
+
+    username: Optional[str] = Field(
+        default_factory=lambda: get_saved_mqtt_field("username", None),
+    )
+    """MQTT broker username."""
+
+    password: Optional[str] = Field(
+        default_factory=lambda: get_saved_mqtt_field("password", None),
+    )
+    """MQTT broker password."""
+
+    timeout: int = Field(
+        default_factory=lambda: int(get_saved_mqtt_field("timeout", 5)),
+    )
+    """MQTT connection timeout in seconds."""
+
+
+class BatDetect2_MessagingConfig(MessagingConfig):
+    """Messaging Configuration schema with persistent defaults."""
+
+    messages_db: Path = Field(  # type: ignore
+        default_factory=lambda: Path(
+            get_saved_messaging_field(
+                "messages_db", Path.home() / "storages" / "messages.db"
+            )
+        ),
+    )
+    """Location of outgoing messages database."""
+
+    message_send_interval: int = Field(
+        default_factory=lambda: int(
+            get_saved_messaging_field("message_send_interval", 120)
+        ),
+    )
+    """Interval in seconds for message sending task."""
+
+    heartbeat_interval: int = Field(
+        default_factory=lambda: int(
+            get_saved_messaging_field("heartbeat_interval", 3600)
+        ),
+    )
+    """Interval in seconds for sending heartbeat messages."""
+
+    mqtt: Optional[BatDetect2_MQTTConfig] = Field(  # type: ignore
+        default_factory=lambda: BatDetect2_MQTTConfig()
+        if get_saved_program_config().get("messaging", {}).get("mqtt")
+        else None,
+    )
+    """MQTT Messaging Configuration."""
+
+
+class BatDetect2_MicrophoneConfig(MicrophoneConfig):
+    """Microphone Configuration schema with persistent defaults."""
+
+    device_name: Optional[str] = Field(
+        default_factory=lambda: get_saved_mic_field(
+            "device_name", "UltraMic 192K 16 bit r4"
+        ),
+    )
+    """ALSA / PipeWire microphone device name."""
+
+    samplerate: int = Field(
+        default_factory=lambda: int(get_saved_mic_field("samplerate", 192000)),
+    )
+    """Microphone sample rate in Hz."""
+
+    audio_channels: int = Field(
+        default_factory=lambda: int(get_saved_mic_field("audio_channels", 1)),
+    )
+    """Number of audio channels."""
+
+
+class BatDetect2_PathsConfig(PathsConfiguration):
+    """Paths Configuration schema with persistent defaults."""
+
+    tmp_audio: Path = Field(
+        default_factory=lambda: get_saved_path_field(
+            "tmp_audio",
+            Path("/run/shm")
+            if Path("/run/shm").exists()
+            else Path.home() / ".acoupi" / "tmp",
+        ),
+    )
+    """Temporary audio directory."""
+
+    recordings: Path = Field(
+        default_factory=lambda: get_saved_path_field(
+            "recordings", Path.home() / "storages" / "recordings"
+        ),
+    )
+    """Permanent recordings storage directory."""
+
+    db_metadata: Path = Field(
+        default_factory=lambda: get_saved_path_field(
+            "db_metadata", Path.home() / "storages" / "metadata.db"
+        ),
+    )
+    """Metadata SQLite database file path."""
+
+
 class BatDetect2_ConfigSchema(DetectionProgramConfiguration):
     """BatDetect2 Program Configuration schema.
 
@@ -396,24 +549,24 @@ class BatDetect2_ConfigSchema(DetectionProgramConfiguration):
         ),
     )
 
-    microphone: MicrophoneConfig = Field(  # type: ignore
-        default_factory=get_default_microphone,
+    microphone: BatDetect2_MicrophoneConfig = Field(  # type: ignore
+        default_factory=BatDetect2_MicrophoneConfig,
     )
 
-    paths: PathsConfiguration = Field(  # type: ignore
-        default_factory=get_default_paths,
+    paths: BatDetect2_PathsConfig = Field(  # type: ignore
+        default_factory=BatDetect2_PathsConfig,
     )
 
-    messaging: MessagingConfig = Field(  # type: ignore
-        default_factory=get_default_messaging,
+    messaging: BatDetect2_MessagingConfig = Field(  # type: ignore
+        default_factory=BatDetect2_MessagingConfig,
     )
 
     recording: BatDetect2_AudioConfig = Field(  # type: ignore
-        default_factory=get_default_recording,
+        default_factory=BatDetect2_AudioConfig,
     )
 
     model: ModelConfig = Field(
-        default_factory=get_default_model,
+        default_factory=ModelConfig,
     )
 
     saving_filters: Optional[SaveRecordingFilter] = Field(

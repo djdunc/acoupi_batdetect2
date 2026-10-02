@@ -90,6 +90,15 @@ def test_saved_program_config_defaults(tmp_path, monkeypatch):
             "messaging_threshold": 0.44,
             "saving_threshold": 0.66,
         },
+        "messaging": {
+            "message_send_interval": 60,
+            "mqtt": {
+                "host": "test.mosquitto.org",
+                "port": 1883,
+                "topic": "test/bats",
+                "username": "batuser",
+            },
+        },
     }
     mock_config.write_text(json.dumps(saved_data))
 
@@ -105,4 +114,9 @@ def test_saved_program_config_defaults(tmp_path, monkeypatch):
     assert schema.model.detection_threshold == 0.22
     assert schema.model.messaging_threshold == 0.44
     assert schema.model.saving_threshold == 0.66
+    assert schema.messaging.message_send_interval == 60
+    assert schema.messaging.mqtt is not None
+    assert schema.messaging.mqtt.host == "test.mosquitto.org"
+    assert schema.messaging.mqtt.topic == "test/bats"
+    assert schema.messaging.mqtt.username == "batuser"
 
