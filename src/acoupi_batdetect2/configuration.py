@@ -1,11 +1,9 @@
-"""Batdetect2 Program Configuration Options."""
-
 import datetime
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
-from acoupi.components import MicrophoneConfig
+from acoupi.components import MQTTConfig, MicrophoneConfig
 from acoupi.programs.templates import (
     AudioConfiguration,
     DetectionProgramConfiguration,
@@ -478,7 +476,7 @@ class BatDetect2_MessagingConfig(MessagingConfig):
     )
     """Interval in seconds for sending heartbeat messages."""
 
-    mqtt: Optional[BatDetect2_MQTTConfig] = Field(  # type: ignore
+    mqtt: Optional[Union[BatDetect2_MQTTConfig, MQTTConfig]] = Field(  # type: ignore
         default_factory=lambda: BatDetect2_MQTTConfig()
         if get_saved_program_config().get("messaging", {}).get("mqtt")
         else None,
@@ -549,19 +547,19 @@ class BatDetect2_ConfigSchema(DetectionProgramConfiguration):
         ),
     )
 
-    microphone: BatDetect2_MicrophoneConfig = Field(  # type: ignore
+    microphone: Union[BatDetect2_MicrophoneConfig, MicrophoneConfig] = Field(  # type: ignore
         default_factory=BatDetect2_MicrophoneConfig,
     )
 
-    paths: BatDetect2_PathsConfig = Field(  # type: ignore
+    paths: Union[BatDetect2_PathsConfig, PathsConfiguration] = Field(  # type: ignore
         default_factory=BatDetect2_PathsConfig,
     )
 
-    messaging: BatDetect2_MessagingConfig = Field(  # type: ignore
+    messaging: Union[BatDetect2_MessagingConfig, MessagingConfig] = Field(  # type: ignore
         default_factory=BatDetect2_MessagingConfig,
     )
 
-    recording: BatDetect2_AudioConfig = Field(  # type: ignore
+    recording: Union[BatDetect2_AudioConfig, AudioConfiguration] = Field(  # type: ignore
         default_factory=BatDetect2_AudioConfig,
     )
 
