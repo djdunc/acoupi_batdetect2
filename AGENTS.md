@@ -63,11 +63,13 @@
    - **Staging Branch (`staging/combined-enhancements`):** All 4 PRs integrated and tested end-to-end on live Raspberry Pi 5.
    - **Data Schema Alignment:** Added `prediction_type=getattr(data.PredictionType, "EVENT", "event")` to `Detection` instantiation in `model.py` and `test_components.py`.
    - **UTC Datetimes:** Timezone-aware UTC timestamps across test suite (`datetime.datetime.now(datetime.timezone.utc)`).
+   - **MQTT Secret & Enum Serialization:** Added unmasking in `write_config()`, masked prompts in `parsers.py`, and Enum/Path unwrap in `operations.py`. Added `transport` pre-validator in `BatDetect2_MQTTConfig`.
+   - **Retained Heartbeats (`retain_heartbeat`):** Heartbeat messages publish with `retain=True` by default in `MQTTMessenger`, preserving the latest device health status on broker restart/reconnection.
 
 ---
 
 ## 3. Operational Verification & Testing
 
-* **Test Suite:** All 21 tests (`pytest -v`) passing on Raspberry Pi 5 (`pi@33PH-acoupi-bat`) against latest upstream `acoupi`.
+* **Test Suite:** All 21 tests (`pytest -v`) passing on Raspberry Pi 5 (`pi@33PH-acoupi-bat` and `pi@UCL200-acoupi-bat`) against latest upstream `acoupi`.
 * **Live Services:** `acoupi.service` and `acoupi-beat.service` active and healthy.
 * **Recording Workers:** `recording` and `default` workers running cleanly with PipeWire audio capture and nocturnal scheduling.
