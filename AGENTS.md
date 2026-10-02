@@ -15,6 +15,7 @@
 
 ### Deployment & Configuration Files on Raspberry Pi
 * **Setup Command:** Run `acoupi setup --program acoupi_batdetect2.program` directly in the active `(bat_env)` conda environment.
+* **Status Command:** Run `acoupi deployment status` to inspect system services, Celery workers, program, and active deployment metadata.
 * **Configuration Locations:**
   * `~/.acoupi/config/program.json`: Program configuration schema (`BatDetect2_ConfigSchema`) containing microphone settings (UltraMic 192k), recording intervals/schedules, storage paths, and messaging endpoints (e.g., MQTT host/port/topic, HTTP).
   * `~/.acoupi/config/celery.json`: Celery worker and broker configuration.
