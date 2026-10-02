@@ -32,7 +32,7 @@
 
 ## 2. Implementation Progress & Current State
 
-### Completed & Merged into `main` (commit `7029186`)
+### Completed & Merged into `main` (commit `bc622e9`)
 1. **NumPy & Type Serialization Fix:**
    - Explicitly cast all detection scores, bounding boxes, and tag scores to native `float` / `str` in [`src/acoupi_batdetect2/model.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/model.py).
 2. **Batched Inference & `inference_mode()` (Branch `perf/batched-inference-mode`):**
@@ -44,40 +44,22 @@
 4. **Reusable Components & Astral Nocturnal Schedule (Branch `feat/is-night-time-schedule`):**
    - Created [`src/acoupi_batdetect2/components.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/components.py) with `IsNightTime`, `HasHighConfidenceDetection`, and `ModelSeparatedDateFileManager`.
    - Wired `get_recording_conditions()` in `program.py`.
-
----
-
-### Active Branch: `feat/pipewire-ultrasonic` (commit `4b170ad`)
-1. **PipeWire Ultrasonic Rates Setup ([`src/acoupi_batdetect2/scripts.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/scripts.py)):**
-   - Added `setup_pipewire()` to generate `~/.config/pipewire/pipewire.conf.d/10-rates.conf` (rates: 32k, 48k, 96k, 192k, 250k, 384k).
-   - Ensured all setup logging prints to `sys.stderr`.
-   - Integrated `setup_audio()` into `BatDetect2_Program.setup()`.
-2. **Precise Audio Trimming & Recorder:**
-   - Implemented `trim_wav()` and `pw_record()` using `Popen` with `SIGINT` graceful shutdown and sample trimming.
+5. **PipeWire Ultrasonic Rates & Setup Defaults (Branch `feat/pipewire-ultrasonic`):**
+   - Added `setup_pipewire()` generating `10-rates.conf` (rates: 32k, 48k, 96k, 192k, 250k, 384k) in [`src/acoupi_batdetect2/scripts.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/scripts.py).
+   - Implemented `trim_wav()` and `pw_record()` with graceful `SIGINT` shutdown and sample-accurate trimming.
    - Added `PrecisePWRecorder` to `components.py`.
-3. **Celery Worker Safeguards & Test Fixes:**
-   - Prepending virtualenv `bin` to `PATH` for worker subprocesses in `program.py`.
-   - Added `setup_celery()` setting `worker_max_tasks_per_child=20`.
-   - Configured `memory://` broker and `cache+memory://` backend in `tests/conftest.py` to prevent test collisions with live RabbitMQ daemon.
-4. **Comprehensive Persistent Setup Defaults ([`src/acoupi_batdetect2/configuration.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/configuration.py)):**
-   - Sub-models (`BatDetect2_AudioConfig`, `BatDetect2_MQTTConfig`, `BatDetect2_MessagingConfig`, `BatDetect2_MicrophoneConfig`, `BatDetect2_PathsConfig`, `ModelConfig`, `SaveRecordingFilter`, `SaveRecordingManager`, `Summariser`) load existing `program.json` / `deployment_defaults.json` on a per-field basis during `acoupi setup --program acoupi_batdetect2.program`.
-   - Schema fields accept `Union` of BatDetect2 and base Acoupi models for parser compatibility.
-   - Uses `SecretStr` for `BatDetect2_MQTTConfig.password` for Acoupi `MQTTMessenger` compatibility.
-   - Parses ISO strings into `datetime.time` objects for schedule times and keeps standalone `ModelConfig()` defaults intact.
+   - Prepend virtualenv `bin` to `PATH` for worker subprocesses in `program.py`.
+   - Added `setup_celery()` configuring `worker_max_tasks_per_child=20`.
+   - Configured `memory://` broker and `cache+memory://` backend in `tests/conftest.py` for test isolation.
+   - Implemented comprehensive persistent setup defaults across all sub-models in [`src/acoupi_batdetect2/configuration.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/configuration.py).
+   - Supported `Union` types for parser compatibility, `SecretStr` for MQTT passwords, and ISO string parsing for schedule times.
 
 ---
 
-## 3. Test Suite Status & Resumption Plan
+## 3. Operational Verification & Testing
 
-### Verification on Pi:
-1. Pull branch updates: `git pull origin feat/pipewire-ultrasonic`
-2. Run test suite: `pytest -v`
-3. Verify all 20 tests pass.
-4. Merge `feat/pipewire-ultrasonic` into `main`.
-5. Run deployment setup on Pi: `acoupi setup --program acoupi_batdetect2.program`
-6. Reload and start systemd units:
-   ```bash
-   systemctl --user daemon-reload
-   systemctl --user restart acoupi.service acoupi-beat.service
-   ```
+* **Test Suite:** All 21 tests (`pytest -v`) passing on Raspberry Pi 5 (`pi@33PH-acoupi-bat`).
+* **Live Services:** `acoupi.service` and `acoupi-beat.service` active and healthy.
+* **Recording Workers:** `recording` and `default` workers running cleanly with PipeWire audio capture and nocturnal scheduling.
+
 
