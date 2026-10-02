@@ -55,14 +55,16 @@
    - Configured `memory://` broker and `cache+memory://` backend in `tests/conftest.py` for test isolation.
    - Implemented comprehensive persistent setup defaults across all sub-models in [`src/acoupi_batdetect2/configuration.py`](file:///Users/dunc/Dropbox/code/CASA/acoupi/acoupi_batdetect2/src/acoupi_batdetect2/configuration.py).
    - Supported `Union` types for parser compatibility, `SecretStr` for MQTT passwords, and ISO string parsing for schedule times.
+6. **Upstream Acoupi Synchronization & Schema Alignment (Commit `5bd1da8`):**
+   - **PR 1 (`feat/cli-deployment-defaults`):** Persistent deployment start defaults (`name`, `latitude`, `longitude`) in `acoupi` CLI.
+   - **PR 2 (`feat/config-parser-defaults`):** Interactive setup parser defaults, `typing.Literal` click choices, and safe subclass type checks.
+   - **Data Schema Alignment:** Added `prediction_type=getattr(data.PredictionType, "EVENT", "event")` to `Detection` instantiation in `model.py` and `test_components.py`.
+   - **UTC Datetimes:** Timezone-aware UTC timestamps across test suite (`datetime.datetime.now(datetime.timezone.utc)`).
 
 ---
 
 ## 3. Operational Verification & Testing
 
-* **Test Suite:** All 21 tests (`pytest -v`) passing on Raspberry Pi 5 (`pi@33PH-acoupi-bat`).
+* **Test Suite:** All 21 tests (`pytest -v`) passing on Raspberry Pi 5 (`pi@33PH-acoupi-bat`) against latest upstream `acoupi`.
 * **Live Services:** `acoupi.service` and `acoupi-beat.service` active and healthy.
 * **Recording Workers:** `recording` and `default` workers running cleanly with PipeWire audio capture and nocturnal scheduling.
-
-
-
